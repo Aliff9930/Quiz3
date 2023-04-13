@@ -36,4 +36,6 @@ Content-Type: application/json
     "password":"123456"
 }
    
-
+############
+POST http://localhost:3000/bye
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkpvaG4gV2ljayIsInBhc3N3b3JkIjoiMTIzNDU2IiwibmFtZSI6IldpY2t3aWNrIiwiZW1haWwiOiJhQGdtYWlsLmNvbSIsImlhdCI6MTY4MTM3MTQ2NiwiZXhwIjoxNjgxMzcxNTI2fQ.CAW1giJzIxp6tIzwJRZGJeX3iK_-Ie1jls4NdrT7NFs
