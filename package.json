@@ -1,27 +1,23 @@
 {
-  "name": "c",
+  "name": "quiz2",
   "version": "1.0.0",
-  "main": "main.js",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Aliff9930/Quiz3.git"
+    "url": "git+https://github.com/Aliff9930/Folder-Baru.git"
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Aliff9930/Quiz3/issues"
+    "url": "https://github.com/Aliff9930/Folder-Baru/issues"
   },
-  "homepage": "https://github.com/Aliff9930/Quiz3#readme",
+  "homepage": "https://github.com/Aliff9930/Folder-Baru#readme",
   "dependencies": {
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0",
-    "moment-timezone": "^0.5.43",
-    "mongodb": "^5.6.0",
-    "nodemon": "^2.0.22"
-  },
-  "keywords": [],
-  "description": ""
+    "jsonwebtoken": "^9.0.0"
+  }
 }

@@ -1,60 +1,69 @@
-
 const express = require('express');
-const app = express();
-const port = 5000;
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://alifjr763:QWE12345@cluster30.chmmxsq.mongodb.net/benr2423?retryWrites=true&w=majority";
-const dbName = "benr2423";
-const usersCollectionDB = "users";
-const visitorsCollectionDB = "visitors";
-const { ObjectId } = require('mongodb');
-const moment = require('moment-timezone');
+const uri = "mongodb+srv://BENR0076:QWE123@cluster30.chmmxsq.mongodb.net/?retryWrites=true&w=majority";
 
-const client = new MongoClient(uri,{
-  serverApi:{
+const client = new MongoClient(uri, {
+  serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
-    deprecationErrors:true,
+    deprecationErrors: true,
   }
 });
 
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    const user = await client.db("benr2423").
+      collection("users").
+      insertOne({
+        "username": "admin",
+        "password": "password",
+        "role": "admin"
+      })
+    console.log(user);
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+run().catch(console.dir);
 
-app.use(express.json());
+const app = express()
+const port = 5000
+//Database of users
 let dbUsers = [
   {
     username: "aliff08",
     password: "0987654321",
     name: "aliffaizat",
-    email: "alifjr763@gmail.com",
-    role  : "user"
+    email: "alifjr763@gmail.com"
   },
   {
-    username: "security",
+    username: "syed",
     password: "123456789",
-    name: "Pak Guard",
-    email: "Pak guard.com",
-    role  : "security"
+    name: "syed ahmad",
+    email: "syed@yahoo.com"
   },
   {
-    username: "admin",
-    password: "password",
-    email : "admin@example.com",
-    role: "admin"
+    username: "mrpotato",
+    password: "123456",
+    name: "kimi",
+    email: "kimi@garena.com"
   }
 ]
 let dbVisitors = [
   {
     visitorname: "John Placebo",
     visitorpass: "john123",
-    id: "871212053345",
-    phoneNumber: "010202067543",
+    id: "A123456",
+    phoneNumber: "020202067543",
     email: "johnplacebo@example.com",
     appointmentDate: "2023-06-21",
     carPlate: "JLB4102",
-    purpose: "Majlis Convo",
-    destination:"Dewan Seminar",
-    registeredBy: "aliffaizat"
+    purpose: "Meeting"
   },
   {
     visitorname: "Jenny Kim",
@@ -63,405 +72,143 @@ let dbVisitors = [
     phoneNumber: "0987654321",
     email: "jenniebp@example.com",
     appointmentDate: "2023-06-22",
-    carPlate: "XYZ2987",
-    purpose: "Mesyuarat PIBG",
-    destination:"Fakulti Mekanikal",
-    registeredBy: "Albino Rafael"
+    carPlate: "XYZ987",
+    purpose: "Event"
   },
   // Add more visitors as needed
 ];
 
-client.connect().then(() => {
-  console.log('Connected to MongoDB');
+app.use(express.json());
 
 app.post('/login', (req, res) => {
-  let data = req.body;
+  let data = req.body
+  // res.send(' Post request '+ JSON.stringify(data));
+  //res.send(' Post request '+ data.name +data.password)
   let user = login(data.username, data.password);
 
-  if (user.role === 'admin') {
-    res.send(generateToken(user, 'admin'));
-  } else if (user.role === 'user') {
-    res.send(generateToken(user, 'user'));
-  } else if (user.role === 'security') {
-    res.send(generateToken(user, 'security'));
-  } else {
-    res.send({ error: "User not found" });
-  }
+  res.send(generateToken(user))
 });
 
-app.post('/register', verifyToken, async (req, res) => {
-  if (req.user.role === 'admin') {
-    let data = req.body;
-    let username = data.username;
-    let match = dbUsers.find(element => element.username === username);
-    if (match) {
-      res.send("Error! User already registered.");
-    } else {
-      let result = await register(
+app.post('/register', verifyToken, (req, res) => {
+  if (req.user.role == 'admin') {
+    let data = req.body
+    res.send(
+      register(
         data.username,
         data.password,
         data.name,
-        data.email,
-        data.role
-      );
-      if (result.status === 'Registration successful!') {
-        await updateUsersCollection(); // Update the users collection in MongoDB
-      }
-      res.send(result);
-    }
-  } else {
-    res.send("Unauthorized");
+        data.email
+      )
+    )
   }
-});
+})
 
 
-app.post('/addvisitors', verifyToken, async (req, res) => {
-  if (req.user.role === 'user') {
-    let data = req.body;
-    let id = data.id;
-    let match = dbVisitors.find(element => element.idnumber === id);
-    if (match) {
-    res.send("Error! Visitor data already in the system.");
-    } else 
-    {
-      let result = await addvisitor(
+app.post('/addvisitors', verifyToken, (req, res) => {
+  if (req.user.role == 'user') {
+    let data = req.body
+    res.send(
+      addvisitor(
         data.visitorname,
-        data.id, 
+        data.id,
         data.visitorpass,
         data.phoneNumber,
         data.email,
         data.appointmentDate,
         data.carPlate,
-        data.purpose,
-        data.destination,
-        data.registeredBy
-      );
-      if (result === 'Visitor registration successful!') {
-        await updateVisitorsCollection(); // Update the visitors collection in MongoDB
-      }
-      res.send(result);
-    }
-  } else {
-    res.send("Unauthorized");
+        data.purpose
+      )
+    )
   }
-});
+})
 
 app.get('/visitorinfo', verifyToken, async (req, res) => {
-  try {
-    // Connect to the MongoDB server
-    await client.connect();
-
-    if (req.user.role === 'admin' || req.user.role === 'security') {
-      const visitorsCursor = client
-        .db("benr2423")
-        .collection("visitors")
-        .find();
-      const visitors = await visitorsCursor.toArray();
+  if (req.user.role == 'admin' || req.user.role == 'security') {
+    // find all visitor
+    const visitors = await client.db("benr2423").
+      collection("visitors").
+      find()
       res.send(visitors);
-    } else if (req.user.role === 'user') {
-      const visitorsCursor = client
-        .db("benr2423")
-        .collection("visitors")
-        .find({ registeredBy: req.user.userProfile.name });
-      const visitors = await visitorsCursor.toArray();
-      res.send(visitors);
-    } else {
-      res.status(401).send('Unauthorized');
-    }
-  } catch (error) {
-    console.error('Error retrieving visitor information:', error);
-    res.status(500).send('Internal Server Error');
-  } finally {
-    // Close the MongoDB connection
-    await client.close();
-  }
-});
-
-
-app.patch('/editvisitor/:id', verifyToken, async (req, res) => {
-  const visitorId = req.params.id;
-  const updateData = req.body;
-
-  try {
-    const visitorsCollection = client.db(dbName).collection(visitorsCollectionDB);
-
-    if (!visitorId) {
-      res.status(400).send('Invalid visitor ID');
-      return;
-    }
-
-    const result = await visitorsCollection.findOneAndUpdate(
-      { _id: new ObjectId(visitorId) },
-      { $set: updateData },
-      { returnOriginal: false }
-    );
-
-    if (!result.value) {
-      res.status(404).send('Visitor not found');
-    } else {
-      await updateVisitorsCollection(); // Update the visitors collection in MongoDB
-      res.send('Visitor info updated successfully');
-    }
-  } catch (error) {
-    console.error('Error updating visitor info:', error);
-    res.status(500).send('An error occurred while updating the visitor info');
-  }
-});
-
-app.delete('/deletevisitor/:id', verifyToken, async (req, res) => {
-  if (req.user.role === 'user') {
-    const visitorId = req.params.id;
-
-    try {
-      const visitorsCollection = client.db(dbName).collection(visitorsCollectionDB);
-      const result = await visitorsCollection.deleteOne({ _id: new ObjectId(visitorId) });
-
-      if (result.deletedCount === 0) {
-        res.status(404).send('Visitor not found');
-      } else {
-        await updateVisitorsCollection(); // Update the visitors collection in MongoDB
-        res.send('Visitor deleted successfully');
-      }
-    } catch (error) {
-      console.error('Error deleting visitor:', error);
-      res.status(500).send('An error occurred while deleting the visitor');
-    }
-  } else {
-    res.status(403).send('Unauthorized');
-  }
-});
-
-
-app.post('/checkin', verifyToken, async (req, res) => {
-  if (req.user.role !== 'security') {
-    return res.status(401).send('Unauthorized');
   }
 
-  const { visitorpass, carplate } = req.body;
-  const visitor = dbVisitors.find(visitor => visitor.visitorpass === visitorpass);
-
-  if (!visitor) {
-    return res.status(404).send('Visitor not found');
+  if(req.user.role == 'user') {
+  const visitors = await client.db("benr2423")
+    collection("visitors").
+    find({ email: req.user.email })
+    res.send(visitors);
   }
-
-  const gmt8Time = moment().tz('GMT+8').format('YYYY-MM-DD HH:mm:ss');
-  visitor.checkinTime = gmt8Time;
-  visitor.carPlate = carplate;
-
-  // Insert or update the check-in data in the RecordTime collection
-  try {
-    await visitingtime(visitorpass, visitor.visitorname, visitor.checkinTime);
-    res.send(`Check-in recorded for visitor: ${visitor.visitorname}
-      Check-in time: ${visitor.checkinTime}
-      Car plate number: ${carplate}`);
-  } catch (error) {
-    console.error('Error inserting/updating RecordTime:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.post('/checkout', verifyToken, async (req, res) => {
-  if (req.user.role !== 'security') {
-    return res.status(401).send('Unauthorized');
-  }
-
-  const { visitorpass } = req.body;
-  const visitor = dbVisitors.find(visitor => visitor.visitorpass === visitorpass);
-
-  if (!visitor) {
-    return res.status(404).send('Visitor not found');
-  }
-
-  if (!visitor.checkinTime) {
-    return res.send('Visitor has not checked in');
-  }
-
-  const gmt8Time = moment().tz('GMT+8').format('YYYY-MM-DD HH:mm:ss');
-  const checkinTime = moment(visitor.checkinTime, 'YYYY-MM-DD HH:mm:ss');
-  const checkoutTime = moment(gmt8Time, 'YYYY-MM-DD HH:mm:ss');
-  visitor.checkoutTime = gmt8Time;
-
-  // Update the check-out time in the RecordTime collection
-  try {
-    await visitingtime(visitorpass, visitor.visitorname, visitor.checkinTime, visitor.checkoutTime);
-    res.send(`Checkout recorded for visitor: ${visitor.visitorname}
-      Checkout time: ${visitor.checkoutTime}`);
-  } catch (error) {
-    console.error('Error inserting/updating RecordTime:', error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+})
 
 function login(loginuser, loginpassword) {
-  console.log("Someone is logging in!", loginuser, loginpassword); // Display mesage
-  const user = dbUsers.find(user => user.username === loginuser && user.password === loginpassword);
+  console.log("Someone is logging in!", loginuser, loginpassword) //Display message to ensure function is called
+  //Verify username is in the database
+  const user = dbUsers.find(user => user.username == loginuser && user.password == loginpassword);
   if (user) {
-    return user;
+    return (user);
   } else {
-    return { error: "User not found" };
+    return ({ error: "User not found" });
   }
 }
 
 
-function register(newusername, newpassword, newname, newemail,newrole) {
-  let match = dbUsers.find(element => element.username === newusername);
+function register(newusername, newpassword, newname, newemail) {
+  //verify if username is already in databse
+  let match = dbUsers.find(element =>
+    element.username == newusername
+  )
   if (match) {
-    return "Error! Username is already taken.";
-  } else  {
-    const newUser = {
+    return ("Error! username is already taken :D")
+  } else {
+    // add info into database
+    dbUsers.push({
       username: newusername,
       password: newpassword,
       name: newname,
-      email: newemail,
-      role: newrole
-    };
-    dbUsers.push(newUser);
-    return {
-      status: "Registration successful!",
-      user: newUser
-    };
+      email: newemail
+    })
+    return ("Registration successful! :D")
   }
 }
+function addvisitor(name, id, visitorpass, phoneNumber, email, appointmentDate, carPlate, purpose) {
+  // Add visitor to the database
+  dbVisitors.push({
+    visitorname:name,
+    passnumber:visitorpass,
+    idnumber:id,
+    phone:phoneNumber,
+    email:email,
+    date:appointmentDate,
+    car:carPlate,
+    reason:purpose
+  });
 
-function addvisitor(name, id, visitorpass, phoneNumber, email, appointmentDate, carPlate, purpose, destination
-  , registeredBy) {
-  // Check if the visitor with the same ID already exists
-  let match = dbVisitors.find(element => element.idnumber === id);
-  if (match) {
-    return "Error! Visitor data already in the system.";
-  } else {
-    // Check if the visitorpass meets the required format
-    const passRegex = new RegExp(`^${name}\\d{4}$`);
-    if (!passRegex.test(visitorpass)) {
-      return "Error! Invalid visitorpass. It should be a combination of 'visitorname' and 4 numbers.";
-    }
-
-    dbVisitors.push({
-      visitorname: name,
-      visitorpass: visitorpass,
-      idnumber: id,
-      phoneNumber: phoneNumber,
-      email: email,
-      date: appointmentDate,
-      carPlate: carPlate,
-      purpose: purpose,
-      destination: destination,
-      registerBy: registeredBy
-    });
-    return "Visitor registration successful!";
-  }
+  return ("Visitor Registration successful! :D")
 }
 
-async function updateUsersCollection() {
-  try {
-    const usersCollection = client.db(dbName).collection(usersCollectionDB);
-
-    for (const user of dbUsers) {
-      const existingUser = await usersCollection.findOne({ _id: user._id });
-
-      if (existingUser) {
-        await usersCollection.updateOne(
-          { _id: user._id },
-          { $set: user },
-          { upsert: true }
-        );
-      } else {
-        user._id = new ObjectId(); // Generate a new ObjectId
-        await usersCollection.insertOne(user);
-      }
-    }
-
-    console.log('Users collection updated successfully');
-  } catch (error) {
-    console.error('Error updating users collection:', error);
-  }
-}
-async function updateVisitorsCollection() {
-  try {
-    const visitorsCollection = client.db(dbName).collection(visitorsCollectionDB);
-
-    for (const visitor of dbVisitors) {
-      const existingVisitor = await visitorsCollection.findOne({ _id: visitor._id });
-
-      if (existingVisitor) {
-        await visitorsCollection.updateOne(
-          { _id: visitor._id },
-          { $set: visitor },
-          { upsert: true }
-        );
-      } else {
-        visitor._id = new ObjectId(); // Generate a new ObjectId
-        await visitorsCollection.insertOne(visitor);
-      }
-    }
-
-    console.log('Visitors collection updated successfully');
-  } catch (error) {
-    console.error('Error updating visitors collection:', error);
-  }
-}
-
-async function visitingtime(visitorPass, visitorName, checkinTime, checkoutTime) {
-  try {
-    await client.connect();
-    const db = client.db(dbName);
-    const RecordCollectionDB = db.collection('RecordTime');
-    // Check if the visitor record already exists
-    const existingRecord = await RecordCollectionDB.findOne({ visitorpass: visitorPass });
-
-    if (existingRecord) {
-      // Update the existing record with the visitor name and checkout time
-      await RecordCollectionDB.updateOne(
-        { visitorpass: visitorPass },
-        { $set: { visitorName: visitorName, checkoutTime: checkoutTime } }
-      );
-      console.log('RecordTime updated successfully');
-    } else {
-      // Create a new document for the visitor
-      const document = {
-        visitorpass: visitorPass,
-        visitorName: visitorName,
-        checkinTime: checkinTime,
-        checkoutTime: checkoutTime
-      };
-      // Insert the document
-      await RecordCollectionDB.insertOne(document);
-      console.log('RecordTime inserted successfully');
-    }
-    // Close the connection
-    client.close();
-  } catch (error) {
-    console.error('Error inserting/updating RecordTime:', error);
-  }
-}
-
-function generateToken(userProfile, role) {
-  const payload = {
+// To generate JWT Token
+function generateToken(userProfile) {
+  return jwt.sign(
     userProfile,
-    role
-  };
-  return jwt.sign(payload, 'access_token', 
-  { expiresIn: 30 * 60 });
+    'my_super_secret_password_that_hack_taktau',
+    { expiresIn: 60 * 60 });
 }
 
+// To verify JWT Token
 function verifyToken(req, res, next) {
-  let header = req.headers.authorization;
-  let token = header.split(' ')[1];
+  let header = req.headers.authorization
+  console.log(header)
 
-  jwt.verify(token, 'access_token', function (err, decoded) {
+  let token = header.split(' ')[1]
+
+  jwt.verify(token, 'my_super_secret_password_that_hack_taktau', function (err, decoded) {
     if (err) {
-      res.send("Invalid Token");
-    } else {
-      req.user = decoded;
-      next();
+      res.send("Invalid Token")
     }
+
+    req.user = decoded
+    next()
   });
 }
-
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
-
-}).catch((error) => {
-  console.error('Error connecting to MongoDB:', error);
-});
+  console.log(`Example app listening on port ${port}`)
+})
