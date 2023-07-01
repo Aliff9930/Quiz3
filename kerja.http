@@ -1,0 +1,41 @@
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+    "username" : "Hazim",
+    "password" : "Aku"
+}
+###########
+POST http://localhost:3000/reg
+
+
+##########
+GET http://localhost:3000/hai
+
+##########
+GET http://localhost:3000/hello
+
+##########
+
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+    "username":"John Wick",
+    "password":"123456",
+    "name":"Wickwick",
+    "email":"a@gmail.com"
+}
+
+############################
+POST http://localhost:3000/login2
+Content-Type: application/json
+
+{
+    "username":"John Wick",
+    "password":"123456"
+}
+   
+############
+GET http://localhost:3000/bye
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkpvaG4gV2ljayIsInBhc3N3b3JkIjoiMTIzNDU2IiwibmFtZSI6IldpY2t3aWNrIiwiZW1haWwiOiJhQGdtYWlsLmNvbSIsImlhdCI6MTY4MTM3MTQ2NiwiZXhwIjoxNjgxMzcxNTI2fQ.CAW1giJzIxp6tIzwJRZGJeX3iK_-Ie1jls4NdrT7NFs
